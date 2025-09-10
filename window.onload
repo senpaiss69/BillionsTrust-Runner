@@ -1,0 +1,126 @@
+<script>
+    window.addEventListener('load', () => {
+        // Game configuration
+        const config = {
+            type: Phaser.AUTO,
+            width: 500,
+            height: 600,
+            parent: 'game-container',
+            backgroundColor: '#0a0e17',
+            physics: {
+                default: 'arcade',
+                arcade: {
+                    gravity: { y: 1000 },
+                    debug: false
+                }
+            },
+            scene: {
+                preload: preload,
+                create: create,
+                update: update
+            }
+        };
+
+        // Game variables
+        let game;
+        let player;
+        let obstacles;
+        let coins;
+        let ground;
+        let lanes = [125, 250, 375]; // Three lanes
+        let currentLane = 1; // Middle lane
+        let isJumping = false;
+        let score = 0;
+        let coinCount = 0;
+        let trustMeter = 0;
+        let speed = 200;
+        let obstacleSpawnTimer;
+        let coinSpawnTimer;
+        let isGameOver = false;
+        let scoreText;
+        let coinsText;
+        let trustFill;
+        let trustPercent;
+        let highScoreText;
+        let highScore = 0;
+
+        // Initialize game
+        game = new Phaser.Game(config);
+
+        function preload() {
+            this.load.image('player', 'https://pbs.twimg.com/profile_images/1950664297253642240/MqtltScV.jpg');
+            this.load.image('coin', 'https://pbs.twimg.com/profile_images/1950603557649985536/RF32n9u5.jpg');
+            this.load.image('obstacle', 'data:image/png;base64,iVBORw0KGgo...');
+            this.load.image('ground', 'data:image/png;base64,iVBORw0KGgo...');
+        }
+
+        function create() {
+            ground = this.add.tileSprite(250, 580, 500, 100, 'ground');
+            this.physics.add.existing(ground, true);
+            ground.body.setSize(500, 20);
+
+            player = this.physics.add.sprite(lanes[currentLane], 450, 'player');
+            player.setDisplaySize(60, 60);
+            player.setCollideWorldBounds(true);
+            player.body.setSize(40, 40);
+
+            obstacles = this.physics.add.group();
+            coins = this.physics.add.group();
+
+            this.physics.add.collider(player, ground);
+            this.physics.add.overlap(player, obstacles, hitObstacle, null, this);
+            this.physics.add.overlap(player, coins, collectCoin, null, this);
+
+            obstacleSpawnTimer = this.time.addEvent({
+                delay: 1500,
+                callback: spawnObstacle,
+                callbackScope: this,
+                loop: true
+            });
+
+            coinSpawnTimer = this.time.addEvent({
+                delay: 800,
+                callback: spawnCoin,
+                callbackScope: this,
+                loop: true
+            });
+
+            scoreText = document.getElementById('score');
+            coinsText = document.getElementById('coins');
+            trustFill = document.getElementById('trust-fill');
+            trustPercent = document.getElementById('trust-percent');
+            highScoreText = document.getElementById('high-score');
+
+            highScore = localStorage.getItem('highScore') || 0;
+            highScoreText.textContent = highScore;
+
+            this.input.keyboard.on('keydown-LEFT', moveLeft);
+            this.input.keyboard.on('keydown-RIGHT', moveRight);
+            this.input.keyboard.on('keydown-UP', jump);
+
+            document.getElementById('left-btn').addEventListener('click', moveLeft);
+            document.getElementById('right-btn').addEventListener('click', moveRight);
+            document.getElementById('jump-btn').addEventListener('click', jump);
+
+            document.getElementById('start-btn').addEventListener('click', () => {
+                document.getElementById('start-screen').classList.add('hidden');
+            });
+
+            document.getElementById('restart-btn').addEventListener('click', restartGame);
+        }
+
+        function update() {
+            if (isGameOver) return;
+            score += Math.floor(speed / 10);
+            scoreText.textContent = score;
+            ground.tilePositionX += speed / 10;
+            if (speed < 400) {
+                speed += 0.05;
+            }
+            player.x = Phaser.Math.Linear(player.x, lanes[currentLane], 0.2);
+        }
+
+        // (Rest of the functions stay unchanged)
+
+    });
+</script>
