@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Billions Trust Runner</title>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0a0e17 0%, #1a2639 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 500px;
+            position: relative;
+        }
+        
+        .game-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            color: #00f7ff;
+            text-shadow: 0 0 15px rgba(0, 247, 255, 0.7);
+        }
+        
+        h2 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #ff00d6;
+            text-shadow: 0 0 10px rgba(255, 0, 214, 0.5);
+        }
+        
+        p {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        
+        #game-container {
+            width: 100%;
+            height: 600px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 0 25px rgba(0, 247, 255, 0.4);
+        }
+        
+        .stats-container {
+            display: flex;
+            justify-content: space-between;
+            margin: 15px 0;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 1.2rem;
+        }
+        
+        .stats-item {
+            display: flex;
+            align-items: center;
+        }
+        
+        .stats-item span {
+            font-weight: bold;
+            margin-left: 8px;
+            color: #00f7ff;
+        }
+        
+        .trust-meter {
+            margin: 15px 0;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 12px 20px;
+            border-radius: 10px;
+        }
+        
+        .trust-meter-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        
+        .meter-bar {
+            height: 20px;
+            background: #1e2a3b;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .meter-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #00f7ff, #ff00d6);
+            border-radius: 10px;
+            transition: width 0.5s;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        
+        .control-btn {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            color: white;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s;
+            box-shadow: 0 0 15px rgba(0, 247, 255, 0.3);
+        }
+        
+        .control-btn:active {
+            transform: scale(0.95);
+            background: rgba(255, 255, 255, 0.25);
+        }
+        
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(10, 14, 23, 0.95);
+            z-index: 10;
+            text-align: center;
+            padding: 30px;
+            border-radius: 12px;
+        }
+        
+        .button {
+            background: linear-gradient(45deg, #ff00d6, #00f7ff);
+            border: none;
+            padding: 15px 40px;
+            border-radius: 50px;
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+            cursor: pointer;
+            margin: 20px 0;
+            transition: all 0.3s;
+            box-shadow: 0 0 20px rgba(0, 247, 255, 0.5);
+        }
+        
+        .button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 25px rgba(0, 247, 255, 0.8);
+        }
+        
+        .achievement {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(45deg, #00f7ff, #ff00d6);
+            padding: 12px 25px;
+            border-radius: 50px;
+            z-index: 5;
+            opacity: 0;
+            transition: opacity 0.5s;
+            font-weight: bold;
+        }
+        
+        .instructions {
+            margin: 20px 0;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: left;
+        }
+        
+        .instructions h3 {
+            margin-bottom: 10px;
+            color: #00f7ff;
+        }
+        
+        .instructions ul {
+            list-style-position: inside;
+            padding-left: 10px;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+        }
+        
+        .logo {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            margin-bottom: 20px;
+            border: 3px solid #00f7ff;
+            box-shadow: 0 0 20px rgba(0, 247, 255, 0.5);
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            h2 {
+                font-size: 1.5rem;
+            }
+            
+            #game-container {
+                height: 500px;
+            }
+            
+            .control-btn {
+                width: 70px;
+                height: 70px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="game-header">
+            <img src="https://pbs.twimg.com/profile_images/1950603557649985536/RF32n9u5.jpg" alt="Billions Network Logo" class="logo">
+            <h1>BILLIONS TRUST RUNNER</h1>
+            <p>Run, jump, and collect trust tokens to build human-AI trust verification!</p>
+        </div>
+        
+        <div class="stats-container">
+            <div class="stats-item">Score: <span id="score">0</span></div>
+            <div class="stats-item">Tokens: <span id="coins">0</span></div>
+            <div class="stats-item">Best: <span id="high-score">0</span></div>
+        </div>
+        
+        <div class="trust-meter">
+            <div class="trust-meter-label">
+                <div>Trust Meter</div>
+                <div id="trust-percent">0%</div>
+            </div>
+            <div class="meter-bar">
+                <div class="meter-fill" id="trust-fill"></div>
+            </div>
+        </div>
+        
+        <div id="game-container">
+            <div class="overlay" id="start-screen">
+                <h2>READY TO VERIFY?</h2>
+                <div class="instructions">
+                    <h3>How to Play:</h3>
+                    <ul>
+                        <li>Use LEFT/RIGHT buttons or arrow keys to move</li>
+                        <li>Press UP or the JUMP button to jump over obstacles</li>
+                        <li>Collect Trust Tokens to increase your Trust Meter</li>
+                        <li>Avoid obstacles to keep your verification run going</li>
+                        <li>Full Trust Meter gives you temporary speed boost!</li>
+                    </ul>
+                </div>
+                <button class="button" id="start-btn">START VERIFICATION RUN</button>
+                <p>Built for the Billions Network - Human-AI Trust Verification</p>
+            </div>
+            
+            <div class="overlay hidden" id="game-over-screen">
+                <h2>VERIFICATION FAILED</h2>
+                <p>Your verification score: <span id="final-score">0</span></p>
+                <p>Trust tokens collected: <span id="final-coins">0</span></p>
+                <p id="achievement-text">Keep building trust!</p>
+                <button class="button" id="restart-btn">TRY VERIFICATION AGAIN</button>
+            </div>
+            
+            <div class="achievement" id="achievement">
+                Achievement Unlocked!
+            </div>
+        </div>
+        
+        <div class="controls">
+            <div class="control-btn" id="left-btn">←</div>
+            <div class="control-btn" id="jump-btn">↑</div>
+            <div class="control-btn" id="right-btn">→</div>
+        </div>
+    </div>
+
+    <script>
+        // Game configuration
+        const config = {
+            type: Phaser.AUTO,
+            width: 500,
+            height: 600,
+            parent: 'game-container',
+            backgroundColor: '#0a0e17',
+            physics: {
+                default: 'arcade',
+                arcade: {
+                    gravity: { y: 1000 },
+                    debug: false
+                }
+            },
+            scene: {
+                preload: preload,
+                create: create,
+                update: update
+            }
+        };
+
+        // Game variables
+        let game;
+        let player;
+        let obstacles;
+        let coins;
+        let ground;
+        let lanes = [125, 250, 375]; // Three lanes
+        let currentLane = 1; // Middle lane
+        let isJumping = false;
+        let score = 0;
+        let coinCount = 0;
+        let trustMeter = 0;
+        let speed = 200;
+        let obstacleSpawnTimer;
+        let coinSpawnTimer;
+        let isGameOver = false;
+        let scoreText;
+        let coinsText;
+        let trustFill;
+        let trustPercent;
+        let highScoreText;
+        let highScore = 0;
+
+        // Initialize game
+        game = new Phaser.Game(config);
+
+        function preload() {
+            // Load founder avatar for player
+            this.load.image('player', 'https://pbs.twimg.com/profile_images/1950664297253642240/MqtltScV.jpg');
+            
+            // Load Billions Network logo for coins
+            this.load.image('coin', 'https://pbs.twimg.com/profile_images/1950603557649985536/RF32n9u5.jpg');
+            
+            // Load obstacle image
+            this.load.image('obstacle', 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAwElEQVRYw+2WQQ6DMAwE//+j9x6rqkhpFcWxHdZrpEdW8Xhm7SSl1PjX1h2wA3bADtgBO2AH7IAd6B14A1XhM9ADvIFn4XvgCbyAO/AoPAIX4AJcgUtwBS7BFbgEV+ASXIFLcAUuwRW4BFfgElyBS3AFLsEVuARX4BJcgUtwBS7BFbgEV+ASXIFLcAUuwRW4BFfgElyBS3AFLsEVuARX4BJcgUtwBS7BFbgEV+ASXIFLcAUuwRW4BFfgElyBS3AFLsEVuARX4BI+E5NfQy2Wb2kAAAAASUVORK5CYII=');
+            
+            // Load ground texture
+            this.load.image('ground', 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAvUlEQVRYw+2V0Q2EIAxAf//oTg7lUI7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7lUA7l8AF9AJMb6k0wDgAAAABJRU5ErkJggg==');
+        }
+
+        function create() {
+            // Create ground
+            ground = this.add.tileSprite(250, 580, 500, 100, 'ground');
+            this.physics.add.existing(ground, true);
+            ground.body.setSize(500, 20);
+            
+            // Create player
+            player = this.physics.add.sprite(lanes[currentLane], 450, 'player');
+            player.setDisplaySize(60, 60);
+            player.setCollideWorldBounds(true);
+            player.body.setSize(40, 40);
+            
+            // Create groups
+            obstacles = this.physics.add.group();
+            coins = this.physics.add.group();
+            
+            // Set up collisions
+            this.physics.add.collider(player, ground);
+            this.physics.add.overlap(player, obstacles, hitObstacle, null, this);
+            this.physics.add.overlap(player, coins, collectCoin, null, this);
+            
+            // Set up obstacle spawning
+            obstacleSpawnTimer = this.time.addEvent({
+                delay: 1500,
+                callback: spawnObstacle,
+                callbackScope: this,
+                loop: true
+            });
+            
+            // Set up coin spawning
+            coinSpawnTimer = this.time.addEvent({
+                delay: 800,
+                callback: spawnCoin,
+                callbackScope: this,
+                loop: true
+            });
+            
+            // Initialize UI elements
+            scoreText = document.getElementById('score');
+            coinsText = document.getElementById('coins');
+            trustFill = document.getElementById('trust-fill');
+            trustPercent = document.getElementById('trust-percent');
+            highScoreText = document.getElementById('high-score');
+            
+            // Load high score
+            highScore = localStorage.getItem('highScore') || 0;
+            highScoreText.textContent = highScore;
+            
+            // Set up controls
+            this.input.keyboard.on('keydown-LEFT', moveLeft);
+            this.input.keyboard.on('keydown-RIGHT', moveRight);
+            this.input.keyboard.on('keydown-UP', jump);
+            
+            document.getElementById('left-btn').addEventListener('click', moveLeft);
+            document.getElementById('right-btn').addEventListener('click', moveRight);
+            document.getElementById('jump-btn').addEventListener('click', jump);
+            
+            // Set up buttons
+            document.getElementById('start-btn').addEventListener('click', () => {
+                document.getElementById('start-screen').classList.add('hidden');
+            });
+            
+            document.getElementById('restart-btn').addEventListener('click', restartGame);
+        }
+
+        function update() {
+            if (isGameOver) return;
+            
+            // Update score
+            score += Math.floor(speed / 10);
+            scoreText.textContent = score;
+            
+            // Scroll ground
+            ground.tilePositionX += speed / 10;
+            
+            // Gradually increase speed
+            if (speed < 400) {
+                speed += 0.05;
+            }
+            
+            // Move player to current lane
+            player.x = Phaser.Math.Linear(player.x, lanes[currentLane], 0.2);
+        }
+
+        function moveLeft() {
+            if (isGameOver || isJumping) return;
+            currentLane = Math.max(0, currentLane - 1);
+        }
+
+        function moveRight() {
+            if (isGameOver || isJumping) return;
+            currentLane = Math.min(2, currentLane + 1);
+        }
+
+        function jump() {
+            if (isGameOver || isJumping) return;
+            isJumping = true;
+            player.setVelocityY(-500);
+            player.y -= 5;
+            
+            // Reset jump when player lands
+            game.time.delayedCall(1000, () => {
+                isJumping = false;
+            });
+        }
+
+        function spawnObstacle() {
+            const lane = Phaser.Math.Between(0, 2);
+            const obstacle = obstacles.create(lanes[lane], -50, 'obstacle');
+            obstacle.setDisplaySize(60, 60);
+            obstacle.body.setSize(40, 40);
+            obstacle.setVelocityY(speed);
+            
+            // Remove obstacle when it goes off screen
+            game.time.delayedCall(5000, () => {
+                if (obstacle.active) obstacle.destroy();
+            });
+        }
+
+        function spawnCoin() {
+            const lane = Phaser.Math.Between(0, 2);
+            const coin = coins.create(lanes[lane], -50, 'coin');
+            coin.setDisplaySize(40, 40);
+            coin.setVelocityY(speed);
+            
+            // Remove coin when it goes off screen
+            game.time.delayedCall(5000, () => {
+                if (coin.active) coin.destroy();
+            });
+        }
+
+        function hitObstacle(player, obstacle) {
+            if (isGameOver) return;
+            
+            // Game over
+            isGameOver = true;
+            obstacleSpawnTimer.remove();
+            coinSpawnTimer.remove();
+            
+            // Show game over screen
+            document.getElementById('final-score').textContent = score;
+            document.getElementById('final-coins').textContent = coinCount;
+            
+            // Check achievements
+            const achievementText = checkAchievements();
+            document.getElementById('achievement-text').textContent = achievementText;
+            
+            document.getElementById('game-over-screen').classList.remove('hidden');
+            
+            // Save high score
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('highScore', highScore);
+                highScoreText.textContent = highScore;
+            }
+        }
+
+        function collectCoin(player, coin) {
+            coin.destroy();
+            coinCount++;
+            coinsText.textContent = coinCount;
+            
+            // Update trust meter
+            trustMeter += 5;
+            if (trustMeter > 100) trustMeter = 100;
+            trustFill.style.width = trustMeter + '%';
+            trustPercent.textContent = trustMeter + '%';
+            
+            // Speed boost when trust meter is full
+            if (trustMeter === 100) {
+                speed += 50;
+                trustMeter = 0;
+                trustFill.style.width = '0%';
+                trustPercent.textContent = '0%';
+                showAchievement("Trust Boost Activated!");
+            }
+        }
+
+        function restartGame() {
+            document.getElementById('game-over-screen').classList.add('hidden');
+            game.scene.restart();
+            score = 0;
+            coinCount = 0;
+            trustMeter = 0;
+            speed = 200;
+            isGameOver = false;
+            
+            // Reset UI
+            trustFill.style.width = '0%';
+            trustPercent.textContent = '0%';
+        }
+
+        function showAchievement(text) {
+            const achievement = document.getElementById('achievement');
+            achievement.textContent = text;
+            achievement.style.opacity = 1;
+            
+            setTimeout(() => {
+                achievement.style.opacity = 0;
+            }, 3000);
+        }
+
+        function checkAchievements() {
+            if (coinCount >= 100) {
+                showAchievement("Verified 100 Tokens!");
+                return "Achievement: Verified 100 Tokens!";
+            }
+            
+            if (score >= 5000) {
+                showAchievement("5000 Points Master!");
+                return "Achievement: 5000 Points Master!";
+            }
+            
+            if (score > highScore) {
+                showAchievement("New High Score!");
+                return "New High Score! Amazing job!";
+            }
+            
+            return "Keep building trust!";
+        }
+    </script>
+</body>
+</html>
